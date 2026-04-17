@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Todo</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f13;
+      --surface: #1a1a24;
+      --surface2: #22222f;
+      --border: #2e2e3f;
+      --accent: #7c6ef5;
+      --accent-hover: #9488f8;
+      --text: #e8e8f0;
+      --text-muted: #7a7a96;
+      --danger: #f56e6e;
+      --success: #5cba85;
+      --warn: #f5a623;
+      --radius: 10px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 48px 16px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 620px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 28px;
+    }
+
+    /* Input area */
+    .input-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-row input[type="text"] {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-size: 15px;
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    .input-row input[type="text"]:focus {
+      border-color: var(--accent);
+    }
+
+    .btn-add {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+      white-space: nowrap;
+    }
+
+    .btn-add:hover { background: var(--accent-hover); }
+
+    .input-meta {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .input-meta select,
+    .input-meta input[type="date"] {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .input-meta select:focus,
+    .input-meta input[type="date"]:focus {
+      border-color: var(--accent);
+    }
+
+    /* Filters & stats */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .filters {
+      display: flex;
+      gap: 4px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px;
+    }
+
+    .filter-btn {
+      background: none;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 14px;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .filter-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .stats {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .stats span { color: var(--accent); font-weight: 600; }
+
+    /* Search */
+    .search-wrap {
+      margin-bottom: 12px;
+    }
+
+    .search-wrap input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 14px 9px 36px;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      transition: border-color .15s;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237a7a96' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: 12px center;
+    }
+
+    .search-wrap input:focus { border-color: var(--accent); }
+
+    /* Todo list */
+    .todo-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .todo-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      transition: border-color .15s, opacity .15s;
+      animation: slideIn .15s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .todo-item:hover { border-color: var(--accent); }
+    .todo-item.done { opacity: .55; }
+
+    .todo-check {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 1px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .15s;
+      background: transparent;
+    }
+
+    .todo-item.done .todo-check {
+      background: var(--success);
+      border-color: var(--success);
+    }
+
+    .todo-check::after {
+      content: '';
+      display: none;
+      width: 5px;
+      height: 9px;
+      border: 2px solid #fff;
+      border-top: none;
+      border-left: none;
+      transform: rotate(45deg) translateY(-1px);
+    }
+
+    .todo-item.done .todo-check::after { display: block; }
+
+    .todo-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .todo-text {
+      font-size: 15px;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    .todo-item.done .todo-text {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .todo-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+
+    .priority-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 20px;
+      letter-spacing: .4px;
+    }
+
+    .priority-badge.high   { background: rgba(245,110,110,.15); color: var(--danger); }
+    .priority-badge.medium { background: rgba(245,166,35,.15);  color: var(--warn); }
+    .priority-badge.low    { background: rgba(92,186,133,.15);  color: var(--success); }
+
+    .due-date {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .due-date.overdue { color: var(--danger); }
+
+    .todo-actions {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      border-radius: 6px;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all .15s;
+    }
+
+    .icon-btn:hover { background: var(--surface2); color: var(--text); }
+    .icon-btn.delete:hover { color: var(--danger); }
+
+    /* Edit inline */
+    .edit-input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      padding: 6px 10px;
+      color: var(--text);
+      font-size: 15px;
+      outline: none;
+    }
+
+    /* Empty state */
+    .empty {
+      text-align: center;
+      padding: 48px 0;
+      color: var(--text-muted);
+    }
+
+    .empty-icon { font-size: 40px; margin-bottom: 12px; }
+    .empty p { font-size: 15px; }
+
+    /* Clear completed */
+    .clear-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 13px;
+      cursor: pointer;
+      padding: 6px 0;
+      transition: color .15s;
+    }
+
+    .clear-btn:hover { color: var(--danger); }
+
+    .bottom-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 14px;
+    }
+
+    /* Sort */
+    .sort-select {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      color: var(--text-muted);
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <h1>Todo</h1>
+  <p class="subtitle" id="dateLabel"></p>
+
+  <!-- Input -->
+  <div class="input-card">
+    <div class="input-row">
+      <input type="text" id="todoInput" placeholder="할 일을 입력하세요..." />
+      <button class="btn-add" onclick="addTodo()">추가</button>
+    </div>
+    <div class="input-meta">
+      <select id="prioritySelect">
+        <option value="medium">보통 우선순위</option>
+        <option value="high">높은 우선순위</option>
+        <option value="low">낮은 우선순위</option>
+      </select>
+      <input type="date" id="dueDateInput" />
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="filters">
+      <button class="filter-btn active" data-filter="all"    onclick="setFilter('all')">전체</button>
+      <button class="filter-btn"        data-filter="active" onclick="setFilter('active')">진행중</button>
+      <button class="filter-btn"        data-filter="done"   onclick="setFilter('done')">완료</button>
+    </div>
+    <div class="stats">완료 <span id="statDone">0</span> / <span id="statTotal">0</span></div>
+  </div>
+
+  <!-- Search -->
+  <div class="search-wrap">
+    <input type="text" id="searchInput" placeholder="검색..." oninput="render()" />
+  </div>
+
+  <!-- Sort -->
+  <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+    <select class="sort-select" id="sortSelect" onchange="render()">
+      <option value="created">최신순</option>
+      <option value="priority">우선순위순</option>
+      <option value="due">마감일순</option>
+      <option value="alpha">이름순</option>
+    </select>
+  </div>
+
+  <!-- List -->
+  <div class="todo-list" id="todoList"></div>
+
+  <!-- Bottom -->
+  <div class="bottom-bar">
+    <button class="clear-btn" onclick="clearCompleted()">완료 항목 삭제</button>
+  </div>
+</div>
+
+<script>
+  const PRIORITY_ORDER = { high: 0, medium: 1, low: 2 };
+  let todos = JSON.parse(localStorage.getItem('todos') || '[]');
+  let filter = 'all';
+
+  // Date label
+  const now = new Date();
+  document.getElementById('dateLabel').textContent =
+    now.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+
+  function save() {
+    localStorage.setItem('todos', JSON.stringify(todos));
+  }
+
+  function addTodo() {
+    const text = document.getElementById('todoInput').value.trim();
+    if (!text) return;
+    todos.unshift({
+      id: Date.now(),
+      text,
+      done: false,
+      priority: document.getElementById('prioritySelect').value,
+      due: document.getElementById('dueDateInput').value,
+      created: Date.now()
+    });
+    document.getElementById('todoInput').value = '';
+    save();
+    render();
+  }
+
+  function toggleDone(id) {
+    const t = todos.find(t => t.id === id);
+    if (t) { t.done = !t.done; save(); render(); }
+  }
+
+  function deleteTodo(id) {
+    todos = todos.filter(t => t.id !== id);
+    save();
+    render();
+  }
+
+  function startEdit(id) {
+    const item = document.querySelector(`[data-id="${id}"]`);
+    const t = todos.find(t => t.id === id);
+    const bodyEl = item.querySelector('.todo-body');
+    const textEl = item.querySelector('.todo-text');
+    const inp = document.createElement('input');
+    inp.className = 'edit-input';
+    inp.value = t.text;
+    textEl.replaceWith(inp);
+    inp.focus();
+    const finish = () => {
+      const v = inp.value.trim();
+      if (v) t.text = v;
+      save();
+      render();
+    };
+    inp.addEventListener('blur', finish);
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') finish();
+      if (e.key === 'Escape') render();
+    });
+  }
+
+  function setFilter(f) {
+    filter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.filter === f);
+    });
+    render();
+  }
+
+  function clearCompleted() {
+    todos = todos.filter(t => !t.done);
+    save();
+    render();
+  }
+
+  function isOverdue(due) {
+    if (!due) return false;
+    return new Date(due) < new Date(new Date().toDateString());
+  }
+
+  function render() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const sort   = document.getElementById('sortSelect').value;
+
+    let list = todos.filter(t => {
+      if (filter === 'active' && t.done) return false;
+      if (filter === 'done'   && !t.done) return false;
+      if (search && !t.text.toLowerCase().includes(search)) return false;
+      return true;
+    });
+
+    list.sort((a, b) => {
+      if (sort === 'priority') return PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority];
+      if (sort === 'due') {
+        if (!a.due && !b.due) return 0;
+        if (!a.due) return 1;
+        if (!b.due) return -1;
+        return new Date(a.due) - new Date(b.due);
+      }
+      if (sort === 'alpha') return a.text.localeCompare(b.text, 'ko');
+      return b.created - a.created;
+    });
+
+    const done  = todos.filter(t => t.done).length;
+    document.getElementById('statDone').textContent  = done;
+    document.getElementById('statTotal').textContent = todos.length;
+
+    const container = document.getElementById('todoList');
+
+    if (list.length === 0) {
+      container.innerHTML = `<div class="empty">
+        <div class="empty-icon">${filter === 'done' ? '✅' : '📋'}</div>
+        <p>${search ? '검색 결과가 없습니다.' : filter === 'done' ? '완료된 항목이 없습니다.' : '할 일을 추가해 보세요!'}</p>
+      </div>`;
+      return;
+    }
+
+    const PRIORITY_LABEL = { high: '높음', medium: '보통', low: '낮음' };
+
+    container.innerHTML = list.map(t => {
+      const overdue = !t.done && isOverdue(t.due);
+      return `
+      <div class="todo-item ${t.done ? 'done' : ''}" data-id="${t.id}">
+        <div class="todo-check" onclick="toggleDone(${t.id})"></div>
+        <div class="todo-body">
+          <div class="todo-text">${escHtml(t.text)}</div>
+          <div class="todo-meta-row">
+            <span class="priority-badge ${t.priority}">${PRIORITY_LABEL[t.priority]}</span>
+            ${t.due ? `<span class="due-date ${overdue ? 'overdue' : ''}">${overdue ? '⚠ ' : ''}${t.due}</span>` : ''}
+          </div>
+        </div>
+        <div class="todo-actions">
+          <button class="icon-btn" onclick="startEdit(${t.id})" title="수정">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="icon-btn delete" onclick="deleteTodo(${t.id})" title="삭제">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          </button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // Enter key support
+  document.getElementById('todoInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addTodo();
+  });
+
+  render();
+</script>
+</body>
+</html>
